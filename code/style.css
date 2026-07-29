@@ -1,9 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Coiny&display=swap');
+
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
 }
- 
+
+body.page {
+    display: flex;
+    background-image: url(/images/green-forest.jpg); 
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+}
+
+div.paper {
+    background-color: seashell;
+    padding: 0 16px 50px;
+    margin-top: 50px;
+    margin-bottom: 100px;
+    max-width: 80%;
+    width: 100%;
+    box-sizing: border-box;
+}
+h1.intro {
+    font-family: "Coiny", system-ui;
+    font-weight: 400;
+    font-style: normal;
+}
+
 img {
     padding: 0;
     display: block;
