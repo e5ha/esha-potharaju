@@ -17,13 +17,6 @@ body.page {
     padding: 0;
 }
 
-img.selfie {
-    width: clamp(150px, 20vw, 300px);
-    height: clamp(150px, 20vw, 300px);
-    object-fit: cover;
-    border-radius: 10%;
-    object-position: center 0%;
-}
 
 div.paper {
     background-color: seashell;
@@ -40,22 +33,40 @@ div.paper {
 
 div.intro {
     display: flex;
-    align-items: center;
-    gap: 30 px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 4px;
 }
 h1.intro {
     font-family: "Coiny", system-ui;
     font-weight: 400;
     font-style: normal;
     color: #1c270d;
-    font-size: clamp(3rem, 8vw, 9rem);
+    font-size: clamp(3rem, 7vw, 8rem);
     line-height: 1;
-    flex: 1;
-    align-self: flex-end;
-    /* color: transparent; 
-    -webkit-text-stroke: 2px #1c270d;  */
-
+    margin: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
+.intro img {
+    height: clamp(150px, 30vw, 300px);
+    width: auto;
+    margin: 0;
+}
+
+.intro img.hi-img {
+    position: relative;
+    top: -20px; /* adjust this value until it looks aligned */
+}
+
+img.selfie {
+    width: clamp(150px, 20vw, 200px);
+    height: clamp(150px, 20vw, 200px);
+    object-fit: cover;
+    border-radius: 10%;
+    object-position: center 0%;
+}
+
 
 img {
     padding: 0;
@@ -67,4 +78,11 @@ img {
 
 div.content {
     margin: clamp(16px, 5vw, 64px); /* paramters: min, medium, max*/
+}
+
+nav {
+    font-weight: 400;
+    font-style: normal;
+    color: #1c270d;
+    font-size: 1.5rem;
 }
