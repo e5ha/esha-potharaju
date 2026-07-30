@@ -18,8 +18,8 @@ body.page {
 }
 
 img.selfie {
-    width: 150px;
-    height: 150px;
+    width: clamp(150px, 20vw, 300px);
+    height: clamp(150px, 20vw, 300px);
     object-fit: cover;
     border-radius: 10%;
     object-position: center 0%;
@@ -46,7 +46,7 @@ h1.intro {
     font-weight: 400;
     font-style: normal;
     color: #1c270d;
-    font-size: 400%;
+    font-size: clamp(3rem, 8vw, 9rem);
     line-height: 1;
     flex: 1;
 }
