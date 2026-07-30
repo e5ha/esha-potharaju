@@ -27,6 +27,8 @@ img.selfie {
 
 div.paper {
     background-color: seashell;
+    background-image: url("../images/beige-paper.jpg");
+    background-repeat: round;
     padding: 0 16px 50px;
     margin-top: 50px;
     margin-bottom: 100px;
@@ -39,7 +41,7 @@ div.paper {
 div.intro {
     display: flex;
     align-items: center;
-    gap: 30 px;;
+    gap: 30 px;
 }
 h1.intro {
     font-family: "Coiny", system-ui;
@@ -49,6 +51,7 @@ h1.intro {
     font-size: clamp(3rem, 8vw, 9rem);
     line-height: 1;
     flex: 1;
+    align-self: flex-end;
 }
 
 img {
