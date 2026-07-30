@@ -8,7 +8,7 @@ html, body {
 
 body.page {
     display: flex;
-    background-image: url(/images/green-forest.jpg); 
+    background-image: url(../images/green-forest.jpg); 
     background-size: cover;
     background-repeat: no-repeat; 
     background-position: center;
@@ -39,7 +39,7 @@ div.paper {
 div.intro {
     display: flex;
     align-items: center;
-    gap: 30 px;
+    gap: 30 px;;
 }
 h1.intro {
     font-family: "Coiny", system-ui;
