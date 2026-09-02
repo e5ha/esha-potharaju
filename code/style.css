@@ -48,6 +48,12 @@ h1.intro {
     flex-shrink: 0;
     flex-grow: 0;
 }
+
+h2 {
+    color: white;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+}
+
 .intro img {
     height: clamp(150px, 30vw, 300px);
     width: auto;
@@ -65,6 +71,22 @@ img.selfie {
     object-fit: cover;
     border-radius: 10%;
     object-position: center 0%;
+}
+
+img.photo-sequence {
+    width: clamp(180px, 30vw, 300px);
+    height: auto;
+}
+
+div.image-pair {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+div.image-pair img {
+    width: min(calc(50% - 6px), 300px);
+    height: auto;
 }
 
 
