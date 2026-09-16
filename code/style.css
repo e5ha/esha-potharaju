@@ -17,6 +17,10 @@ body.page {
     padding: 0;
 }
 
+body.cs180-page {
+    background: #e8d8b8;
+}
+
 
 div.paper {
     background-color: seashell;
@@ -85,4 +89,182 @@ nav {
     font-style: normal;
     color: #1c270d;
     font-size: 1.5rem;
+}
+
+nav a {
+    color: #1c270d;
+    text-decoration: none;
+    border-bottom: 2px solid #a9b77b;
+}
+
+.project-report {
+    max-width: 900px;
+    color: #263018;
+    font-family: Georgia, serif;
+    line-height: 1.6;
+}
+
+.project-report h1,
+.project-report h2,
+.project-report h3 {
+    font-family: "Coiny", system-ui;
+    font-weight: 400;
+    line-height: 1.15;
+}
+
+.project-report h1 {
+    max-width: 760px;
+    margin: 0 0 16px;
+    color: #1c270d;
+    font-size: clamp(2.4rem, 6vw, 5rem);
+}
+
+.project-report h2 {
+    margin: 52px 0 12px;
+    padding-top: 18px;
+    border-top: 2px solid #a9b77b;
+    color: #425d1e;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+.project-report h3 {
+    margin: 24px 0 4px;
+    color: #5d3f2a;
+    font-size: 1.3rem;
+}
+
+.project-report p {
+    max-width: 72ch;
+}
+
+.method-steps {
+    max-width: 72ch;
+    padding-left: 28px;
+}
+
+.method-steps li {
+    margin: 10px 0;
+    padding-left: 4px;
+}
+
+.equation {
+    max-width: 72ch;
+    margin: 16px 0;
+    padding: 14px 16px;
+    overflow-x: auto;
+    background: #f2e8d2;
+    border-left: 4px solid #a9b77b;
+    color: #425d1e;
+    font-family: Georgia, serif;
+    font-style: italic;
+}
+
+.eyebrow {
+    margin: 34px 0 8px;
+    color: #8b5e34;
+    font-family: "Coiny", system-ui;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.lede {
+    color: #5d3f2a;
+    font-size: 1.2rem;
+}
+
+code {
+    padding: 2px 5px;
+    background: #e5e0c9;
+    color: #425d1e;
+}
+
+.result-grid,
+.comparison,
+.gallery {
+    display: grid;
+    gap: 14px;
+}
+
+.result-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-top: 20px;
+}
+
+.result-grid article,
+.comparison > div {
+    padding: 16px;
+    background: rgba(255, 250, 237, 0.62);
+    border: 1px solid #c4c99c;
+}
+
+.result-grid img,
+.gallery img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
+.result-grid h3,
+.result-grid p {
+    margin-top: 0;
+}
+
+.result-note {
+    color: #725f4c;
+    font-size: 0.95rem;
+}
+
+.comparison {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 24px;
+}
+
+.comparison span {
+    color: #8b5e34;
+    font-family: "Coiny", system-ui;
+    font-size: 1.2rem;
+}
+
+.gallery {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    margin: 24px 0;
+}
+
+.gallery figure {
+    margin: 0;
+}
+
+.image-placeholder {
+    display: grid;
+    aspect-ratio: 4 / 3;
+    place-items: center;
+    background: #d9d7b8;
+    color: #5d3f2a;
+    font-family: "Coiny", system-ui;
+    font-size: 1.7rem;
+}
+
+.gallery figcaption {
+    padding-top: 6px;
+    color: #5d3f2a;
+    font-size: 0.85rem;
+}
+
+.gallery figcaption span {
+    color: #81735c;
+}
+
+@media (max-width: 600px) {
+    div.paper {
+        max-width: 94%;
+        padding: 0 10px 32px;
+    }
+
+    div.content {
+        margin: 20px 12px;
+    }
+
+    .comparison {
+        grid-template-columns: 1fr;
+    }
 }

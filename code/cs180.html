@@ -2,22 +2,123 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Esha's Website</title>
+    <title>CS180 Project | Esha's Website</title>
     <link rel="stylesheet" href="style.css" media="screen">
 </head>
-<body class = "page">
+<body class = "page cs180-page">
     <div class = "paper">
         
         <div class = "content">
 
-            <div class = "intro">
-                <img class = "selfie" src = "../images/esha-in-metro.jpg"> 
-                <img class = "hi-img" src = "../images/hi_im_esha.gif">
-            </div>
-
             <nav class = "nav">
-                <a href= = "/"> blah <br></a>
+                <a href="../index.html"> home </a>
             </nav>
+
+            <main class="project-report">
+                <p class="eyebrow">CS180 / CS280A</p>
+                <h1>Prokudin-Gorskii Image Alignment</h1>
+                <p class="lede">Reconstructing color photographs from three black-and-white exposures by finding the displacement that brings their channels into register.</p>
+
+                <section id="overview">
+                    <h2>Project Overview</h2>
+                    <h3>What Prokudin-Gorskii images are</h3>
+                    <p>Sergei Prokudin-Gorskii photographed scenes through red, green, and blue filters, recording each exposure on a separate strip of glass. The resulting scans look monochromatic when viewed individually, but combining the three channels recreates a color image.</p>
+                    <h3>What my goal was</h3>
+                    <p>My goal was to separate each stacked scan into blue, green, and red channels, estimate the translations between them, and merge the aligned channels into a natural-looking color photograph.</p>
+                </section>
+
+                <section id="single-scale">
+                    <h2>Single-Scale Alignment</h2>
+                    <h3>Splitting the image into B / G / R</h3>
+                    <p>Each input is a vertical stack of three grayscale exposures. The same scene was photographed through blue, green, and red filters, so the stack contains the information for one color image but not in the form of three aligned color channels yet.</p>
+                    <ol class="method-steps">
+                        <li><strong>Crop the border.</strong> I remove a narrow outer margin before alignment. The border can contain uneven brightness, scanner artifacts, or frame edges that would distract the similarity metric.</li>
+                        <li><strong>Divide the stack.</strong> I split the remaining image into three equal-height pieces. The top piece becomes <code>B</code>, the middle piece becomes <code>G</code>, and the bottom piece becomes <code>R</code>.</li>
+                        <li><strong>Choose a reference.</strong> I keep the blue channel fixed and align the green and red channels to it. The choice of reference only changes the coordinate system; it does not change the final relative alignment.</li>
+                    </ol>
+                    <h3>Searching over <code>(x, y)</code> displacements</h3>
+                    <p>A displacement is written as <code>(x, y)</code>, where <code>x</code> is the horizontal movement and <code>y</code> is the vertical movement. For example, <code>(4, -2)</code> means move the channel four pixels right and two pixels up relative to the reference.</p>
+                    <ol class="method-steps">
+                        <li>I choose a search range, such as every integer <code>x</code> and <code>y</code> from <code>-15</code> through <code>15</code>.</li>
+                        <li>For each candidate pair, I translate the channel by that amount. Pixels that move outside the image are not wrapped around to the opposite edge.</li>
+                        <li>I compare only the rectangular region where both translated and reference channels contain valid pixels. This prevents a shift from being rewarded or punished because of newly exposed blank edges.</li>
+                        <li>I compute one similarity score for that candidate. After testing the full window, I keep the shift with the best score and apply it to the channel.</li>
+                    </ol>
+                    <h3>NCC and L2</h3>
+                    <p>Both metrics turn the visual question “are these two channels lined up?” into a number. Let <code>A</code> be the reference-channel pixels in the valid overlap and <code>B</code> be the shifted-channel pixels in that same overlap. The score is calculated separately for every candidate displacement.</p>
+                    <h3>Normalized cross-correlation (NCC)</h3>
+                    <p>First, I subtract the mean intensity from each overlap so that the comparison focuses on structure instead of overall exposure. I then compare the centered pixel vectors:</p>
+                    <div class="equation">NCC(A, B) = sum((A - mean(A)) (B - mean(B))) / (sqrt(sum((A - mean(A))^2)) sqrt(sum((B - mean(B))^2)))</div>
+                    <ol class="method-steps">
+                        <li>The numerator is large and positive when bright and dark patterns occur in the same places.</li>
+                        <li>The denominator normalizes for the amount of contrast in each channel, keeping the score roughly between <code>-1</code> and <code>1</code>.</li>
+                        <li>I select the displacement with the <strong>largest</strong> NCC score. A score near <code>1</code> indicates strong agreement in the overlap.</li>
+                    </ol>
+                    <p>NCC is useful here because the red, green, and blue exposures can have different brightness or contrast. A channel can be globally lighter than the reference and still receive a high score if its edges and shapes line up.</p>
+                    <h3>L2, or squared error</h3>
+                    <p>L2 measures the distance between corresponding pixels directly:</p>
+                    <div class="equation">L2(A, B) = sum((A - B)^2)</div>
+                    <ol class="method-steps">
+                        <li>For every pixel in the overlap, subtract the shifted-channel intensity from the reference intensity.</li>
+                        <li>Square the difference so positive and negative errors do not cancel.</li>
+                        <li>Add all squared differences together. Small values mean the channels are more similar.</li>
+                        <li>I select the displacement with the <strong>smallest</strong> L2 score.</li>
+                    </ol>
+                    <p>L2 can work well when the exposures have similar brightness, but it is more sensitive to an overall intensity change than NCC. In this project, NCC was the more useful choice when exposure levels differed.</p>
+                    <h3>Building the color image</h3>
+                    <p>After finding one displacement for green and one for red, I translate those channels and stack the three arrays in the order <code>[R, G, B]</code>. Each pixel in the result is therefore a three-value color sample. I crop the final edges to the shared valid region so that the output does not contain empty borders or colored fringes caused by pixels with no matching data.</p>
+                    <div class="result-grid">
+                        <article><img src="../images/out_path/out_cathedral.jpg" alt="Aligned Cathedral result"><h3>Cathedral</h3><p class="result-note">Offsets: G (2, 5), R (227, 15).</p></article>
+                        <article><img src="../images/out_path/out_monastery.jpg" alt="Aligned Monastery result"><h3>Monastery</h3><p class="result-note">Offsets: G (2, 6), R (200, 15).</p></article>
+                        <article><img src="../images/out_path/out_tobolsk.jpg" alt="Aligned Tobolsk result"><h3>Tobolsk</h3><p class="result-note">Offsets: G (3, 3), R (6, 3)</p></article>
+                    </div>
+                </section>
+
+                <section id="pyramid">
+                    <h2>Multi-Scale / Image Pyramid</h2>
+                    <h3>Why single-scale becomes expensive</h3>
+                    <p>Large scans make an exhaustive search expensive because every candidate shift compares many more pixels. A large displacement can also fall outside a practical full-resolution search window.</p>
+                    <h3>The pyramid and coarse-to-fine alignment</h3>
+                    <p>I built a pyramid by repeatedly reducing the image by a factor of two. Alignment starts at the smallest level, where the same real-world motion occupies fewer pixels. At each finer level, the current estimate is enlarged and refined with a smaller local search.</p>
+                    <h3>Doubling displacement between levels</h3>
+                    <p>When moving from a level to the next larger level, both coordinates of the estimated displacement are doubled: <code>(x, y) -&gt; (2x, 2y)</code>. The finer-level search then corrects the remaining error.</p>
+                </section>
+
+                <section id="results">
+                    <h2>Results</h2>
+                    <p>The aligned outputs are shown below.</p>
+                    <div class="gallery">
+                        <figure><img src="../images/out_path/out_cathedral.jpg" alt="Aligned Cathedral result"><figcaption>cathedral.jpg<br><span>G: (2, 5); R: (3, 12)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_monastery.jpg" alt="Aligned Monastery result"><figcaption>monastery.jpg<br><span>G: (2, 6); R: (2, 3)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_tobolsk.jpg" alt="Aligned Tobolsk result"><figcaption>tobolsk.jpg<br><span>G: (3, 3); R: (6, 3)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_church.jpg" alt="Aligned Church result"><figcaption>church.jpg<br><span>G: (4, 25); R: (-4, 58)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_emir.jpg" alt="Aligned Emir result"><figcaption>emir.jpg<br><span>G: (24, 49); R: (-278, 130)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_harvesters.jpg" alt="Aligned Harvesters result"><figcaption>harvesters.jpg<br><span>G: (10, 20); R: (20, 40)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_icon.jpg" alt="Aligned Icon result"><figcaption>icon.jpg<br><span>G: (5, 10); R: (10, 30)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_melons.jpg" alt="Aligned Melons result"><figcaption>melons.jpg<br><span>G: (5, 12); R: (15, 35)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_self_portrait.jpg" alt="Aligned Self Portrait result"><figcaption>self_portrait.jpg<br><span>G: (29, 79); R: (37, 176)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_religious_painting.jpg" alt="Aligned Religious Painting result"><figcaption>religious_painting.jpg<br><span>G: (3, 28); R: (7, 68)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_siren.jpg" alt="Aligned Siren result"><figcaption>siren.jpg<br><span>G: (-6, 49); R: (-25, 96)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_three_generations.jpg" alt="Aligned Three Generations result"><figcaption>three_generations.jpg<br><span>G: (14, 53); R: (11, 112)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_ilemselga.jpg" alt="Aligned Ilemselga result"><figcaption>ilemselga.jpg<br><span>G: (3, 15); R: (-10, 45)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_wharf.jpg" alt="Aligned Wharf result"><figcaption>wharf.jpg<br><span>G: (-7, 15); R: (-16, 82)</span></figcaption></figure>
+                    </div>
+                    <h3>Additional image</h3>
+                    <div class="gallery">
+                        <figure><img src="../images/out_path/out_sosnovyi_bor.jpg" alt="Aligned Sosnovyi Bor result"><figcaption>sosnovyi_bor.jpg<br><span>G: (3, 3); R: (198, -251)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_waterfront.jpg" alt="Aligned Waterfront result"><figcaption>waterfront.jpg<br><span>G: (-7, 15); R: (-16, 82)</span></figcaption></figure>
+                        <figure><img src="../images/out_path/out_malorossi.jpg" alt="Aligned Malorossi result"><figcaption>malorossi.jpg<br><span>G: (8, -23); R: (11, -34)</span></figcaption></figure>
+                    </div>
+                </section>
+
+                <section id="failures">
+                    <h2>Failures</h2>
+                    <p>Not every image aligns perfectly. The clearest failure case is the Emir image. In the final output, the red channel appears completely misregistered, which matches the very large red-channel displacement in the result table: <span>G: (24, 49); R: (-278, 130)</span>.</p>
+                    <p>This happens because the red exposure of Emir has a noticeably different brightness pattern than the green and blue channels. The matching objective is trying to maximize similarity between overlapping pixels, but when the red channel is much brighter or has different contrast structure, a spurious high-scoring shift can appear that is far away from the true alignment. In other words, the algorithm is distracted by the mismatch in intensity structure and settles on an extreme displacement instead of the correct registration.</p>
+                    <p>In practice, this is a failure of the feature matching step rather than the geometric search itself: the red channel's brightness pattern is not consistent enough with the other two channels for a simple NCC or L2 comparison to identify the true offset reliably. Stronger pre-processing, better normalization, or a more robust feature-based alignment would likely reduce this failure.</p>
+                </section>
+
+            </main>
             
         </div>
     </div>
