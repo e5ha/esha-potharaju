@@ -115,7 +115,6 @@
                     <h2>Failures</h2>
                     <p>Not every image aligns perfectly. The clearest failure case is the Emir image. In the final output, the red channel appears completely misregistered, which matches the very large red-channel displacement in the result table: <span>G: (24, 49); R: (-278, 130)</span>.</p>
                     <p>This happens because the red exposure of Emir has a noticeably different brightness pattern than the green and blue channels. The matching objective is trying to maximize similarity between overlapping pixels, but when the red channel is much brighter or has different contrast structure, a spurious high-scoring shift can appear that is far away from the true alignment. In other words, the algorithm is distracted by the mismatch in intensity structure and settles on an extreme displacement instead of the correct registration.</p>
-                    <p>In practice, this is a failure of the feature matching step rather than the geometric search itself: the red channel's brightness pattern is not consistent enough with the other two channels for a simple NCC or L2 comparison to identify the true offset reliably. Stronger pre-processing, better normalization, or a more robust feature-based alignment would likely reduce this failure.</p>
                 </section>
 
             </main>
