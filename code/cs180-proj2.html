@@ -18,16 +18,9 @@
             <main class="project-report">
                 <p class="eyebrow">CS180: Intro to Computer Vision and Computational Photography</p>
                 <div class="intro" style="align-items:center; gap:20px; margin-top:10px; margin-bottom:16px;">
-                    <img src="https://cal-cs180.github.io/fa26/hw/proj2/files/ucbseal_139_540.png" alt="Berkeley logo" style="height:90px; width:auto;">
                     <h1 style="margin:0;">Programming Project #2</h1>
                 </div>
                 <p class="lede">Fun with Filters and Frequencies</p>
-
-                <section id="overview">
-                    <h2>Project summary</h2>
-                    <p>This page reflects the implementation and generated results from the notebook in the project folder, adapted into a polished webpage. The notebook focuses on convolution, edge detection, Gaussian smoothing, derivative-of-Gaussian filters, unsharp masking, hybrid images, and Gaussian/Laplacian stacks.</p>
-                    <p>The central lesson is that image processing depends on the scale and frequency content of the signal: smoothing suppresses noise, differencing highlights edges, Gaussian filtering stabilizes derivatives, and blending images across frequency bands creates visually compelling effects.</p>
-                </section>
 
                 <section id="part-1-1">
                     <h2>Part 1.1: Convolution from scratch</h2>
@@ -248,10 +241,32 @@ hybrid = low_pass + high_weight * high_pass</code></pre>
                     <p>These stacks are the core building blocks for multi-resolution blending: the low-frequency band carries smooth structure, while the higher-frequency bands preserve local detail and texture.</p>
                 </section>
 
-                <section id="takeaway">
-                    <h2>Takeaway</h2>
-                    <p>The notebook exercises reinforce a central computational photography principle: the right filter depends on the task. Finite differences highlight edges, Gaussian smoothing suppresses noise, unsharp masks reintroduce detail, and hybrid images blend frequency bands to create perceptual transitions. Most importantly, filtering is not a one-size-fits-all operation: the best result comes from choosing the correct scale and the correct representation of image content.</p>
+                <section id="part-2-4">
+                    <h2>Part 2.4: Multiresolution blending</h2>
+                    <p>The final section of the assignment brings together the Gaussian and Laplacian stack ideas into a seamless image blend. Instead of cutting two images together at a hard boundary, the notebook’s multiresolution strategy blends them at different frequency scales. The smooth mask is blurred with a Gaussian stack so the seam fades gradually rather than appearing as a visible line.</p>
+                    <pre><code>mask = np.zeros_like(img1)
+mask[:, mid:] = 1
+mask_blurred = convolve2d(mask, G, mode='same', boundary='symm')
+
+for i in range(len(L1)):
+    blended_level = L1[i] * mask_blurred + L2[i] * (1 - mask_blurred)
+    result_levels.append(blended_level)
+
+blended = sum(result_levels)</code></pre>
+                    <p>This is the core idea behind the “oraple” result: each frequency band is weighted according to the mask, and the seam is softened at all scales. The effect is much more natural than a direct cut-and-paste.</p>
+                    <div class="comparison">
+                        <div>
+                            <span>Oraple blend</span>
+                            <img src="../images/oraple-rgb.png" alt="Oraple RGB blend">
+                        </div>
+                        <div>
+                            <span>Why it works</span>
+                            <p>Low-frequency content changes slowly, so it can be blended over a wider transition. High-frequency content carries edges and texture, so it is mixed more cautiously. This makes the seam look smooth while preserving structure from both images.</p>
+                        </div>
+                    </div>
                 </section>
+
+               
             </main>
         </div>
     </div>
