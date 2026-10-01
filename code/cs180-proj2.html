@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS180 Project 2 | Filters and Frequencies</title>
+    <link rel="stylesheet" href="style.css" media="screen">
+</head>
+<body class="page cs180-page">
+    <div class="paper">
+        <div class="content">
+            <nav class="nav">
+                <a href="../index.html">home</a>
+                <span> / </span>
+                <a href="cs180.html">previous project</a>
+            </nav>
+
+            <main class="project-report">
+                <p class="eyebrow">CS180: Intro to Computer Vision and Computational Photography</p>
+                <div class="intro" style="align-items:center; gap:20px; margin-top:10px; margin-bottom:16px;">
+                    <img src="https://cal-cs180.github.io/fa26/hw/proj2/files/ucbseal_139_540.png" alt="Berkeley logo" style="height:90px; width:auto;">
+                    <h1 style="margin:0;">Programming Project #2</h1>
+                </div>
+                <p class="lede">Fun with Filters and Frequencies</p>
+
+                <section id="overview">
+                    <h2>Project summary</h2>
+                    <p>This page reflects the implementation and generated results from the notebook in the project folder, adapted into a polished webpage. The notebook focuses on convolution, edge detection, Gaussian smoothing, derivative-of-Gaussian filters, unsharp masking, hybrid images, and Gaussian/Laplacian stacks.</p>
+                    <p>The central lesson is that image processing depends on the scale and frequency content of the signal: smoothing suppresses noise, differencing highlights edges, Gaussian filtering stabilizes derivatives, and blending images across frequency bands creates visually compelling effects.</p>
+                </section>
+
+                <section id="part-1-1">
+                    <h2>Part 1.1: Convolution from scratch</h2>
+                    <p>The notebook implements convolution in two ways: a direct four-loop version and a padded two-loop version with a flipped kernel. This is the basis for all filtering operations in the project.</p>
+                    <pre><code>def convolution_four_loops(image, kernel):
+    im_height, im_width = image.shape
+    k_height, k_width = kernel.shape
+    output = np.zeros_like(image, dtype=float)
+    kernel_flipped = np.flip(kernel)
+    pad_height = k_height // 2
+    pad_width = k_width // 2
+    for row in range(im_height):
+        for col in range(im_width):
+            for k_row in range(k_height):
+                for k_col in range(k_width):
+                    im_i = row + k_row - pad_height
+                    im_j = col + k_col - pad_width
+                    if im_i in range(0, im_height) and im_j in range(0, im_width):
+                        output[row, col] += image[im_i, im_j] * kernel_flipped[k_row, k_col]
+    return output</code></pre>
+                    <pre><code>def convolution_two_loops(image, kernel):
+    im_height, im_width = image.shape
+    k_height, k_width = kernel.shape
+    output = np.zeros_like(image, dtype=float)
+    kernel_flipped = np.flip(kernel)
+    pad_height = k_height // 2
+    pad_width = k_width // 2
+    padded = np.pad(image, ((pad_height, pad_height), (pad_width, pad_width)), mode='constant')
+    for row in range(im_height):
+        for col in range(im_width):
+            patch = padded[row : row + k_height, col : col + k_width]
+            output[row, col] = np.sum(patch * kernel_flipped)
+    return output</code></pre>
+                    <p>Using a 9x9 box filter on a grayscale selfie demonstrates the effect of local averaging. The notebook then compares the custom convolution to the SciPy implementation to validate correctness.</p>
+                    <div class="comparison">
+                        <div>
+                            <span>Grayscale selfie</span>
+                            <img src="../images/proj2/selfie_gray.png" alt="Grayscale selfie">
+                        </div>
+                        <div>
+                            <span>Box-filtered result</span>
+                            <img src="../images/proj2/selfie_box.png" alt="Box-filtered selfie">
+                        </div>
+                    </div>
+                    <div class="comparison" style="margin-top: 16px;">
+                        <div>
+                            <span>Dx response</span>
+                            <img src="../images/proj2/selfie_dx.png" alt="Selfie differential x">
+                        </div>
+                        <div>
+                            <span>Dy response</span>
+                            <img src="../images/proj2/selfie_dy.png" alt="Selfie differential y">
+                        </div>
+                    </div>
+                </section>
+
+                <section id="part-1-2">
+                    <h2>Part 1.2: Finite difference operator</h2>
+                    <p>To approximate derivatives in the image, the notebook uses the simple finite difference kernels:</p>
+                    <pre><code>D_x = np.array([[-1, 0, 1]])
+D_y = np.array([[-1],
+                [0],
+                [1]])</code></pre>
+                    <p>These were convolved with the cameraman image to estimate brightness changes in the x and y directions. The resulting gradient magnitude captures edge strength, while thresholding converts it into a binary edge map.</p>
+                    <div class="comparison">
+                        <div>
+                            <span>Dx</span>
+                            <img src="../images/proj2/cameraman_dx.png" alt="Cameraman derivative x">
+                        </div>
+                        <div>
+                            <span>Dy</span>
+                            <img src="../images/proj2/cameraman_dy.png" alt="Cameraman derivative y">
+                        </div>
+                    </div>
+                    <div class="comparison" style="margin-top: 16px;">
+                        <div>
+                            <span>Gradient magnitude</span>
+                            <img src="../images/proj2/cameraman_grad.png" alt="Cameraman gradient magnitude">
+                        </div>
+                        <div>
+                            <span>Thresholded edges</span>
+                            <img src="../images/proj2/cameraman_edges.png" alt="Cameraman thresholded edges">
+                        </div>
+                    </div>
+                    <p>The threshold was chosen qualitatively to suppress noise while preserving the major image structures. With a threshold around 70, the edge map exposes the strongest contours without becoming overly noisy.</p>
+                </section>
+
+                <section id="part-1-3">
+                    <h2>Part 1.3: Derivative of Gaussian (DoG)</h2>
+                    <p>The notebook notes that pure finite differences are noisy. A Gaussian blur smooths the image before differentiating, which produces cleaner edges. The notebook forms a 2D Gaussian kernel by taking the outer product of a 1D Gaussian kernel:</p>
+                    <pre><code>gaussian_1d = cv2.getGaussianKernel(5, 0)
+gaussian_2d = gaussian_1d @ gaussian_1d.T</code></pre>
+                    <p>After blurring the cameraman image, the derivative response is recomputed. The Gaussian-smoothed gradient gives less fragmented edges than the raw difference operator.</p>
+                    <div class="comparison">
+                        <div>
+                            <span>Blurred + gradient</span>
+                            <img src="../images/proj2/cameraman_gaussian_grad.png" alt="Gaussian smoothed gradient magnitude">
+                        </div>
+                        <div>
+                            <span>Blurred + edges</span>
+                            <img src="../images/proj2/cameraman_gaussian_edges.png" alt="Gaussian smoothed edge image">
+                        </div>
+                    </div>
+                    <div class="comparison" style="margin-top: 16px;">
+                        <div>
+                            <span>DoG gradient</span>
+                            <img src="../images/proj2/cameraman_dog_grad.png" alt="DoG gradient magnitude">
+                        </div>
+                        <div>
+                            <span>DoG edges</span>
+                            <img src="../images/proj2/cameraman_dog_edges.png" alt="DoG edge image">
+                        </div>
+                    </div>
+                    <p>The final observation in the notebook is that the Gaussian-smoothed finite-difference output is effectively identical to the derivative-of-Gaussian result, confirming the associative property of convolution.</p>
+                </section>
+
+                <section id="part-2-1">
+                    <h2>Part 2.1: Unsharp mask sharpening</h2>
+                    <p>The notebook defines a single-kernel unsharp mask based on the identity filter minus a Gaussian blur. This uses the idea that high frequencies often correspond to edges and detail, while low frequencies correspond to broad smooth areas.</p>
+                    <pre><code>def unsharp_mask(image, kernel_size=5, sigma =0, alpha=1.0):
+    gaussian_1d = cv2.getGaussianKernel(kernel_size, sigma)
+    G = gaussian_1d @ gaussian_1d.T
+    identity = np.zeros_like(G)
+    center = kernel_size // 2
+    identity[center, center] = 1
+    unsharp_kernel = (1 + alpha) * identity - alpha * G
+    return convolve2d(image, unsharp_kernel, mode='same', boundary='fill')</code></pre>
+                    <p>Applied to the Taj Mahal image and a crying emoji, the sharpened output accentuates the edge content and brings out structure that is otherwise softened by the blur.</p>
+                    <div class="comparison">
+                        <div>
+                            <span>Taj Mahal sharpened</span>
+                            <img src="../images/proj2/taj_mahal_sharpened.png" alt="Sharpened Taj Mahal">
+                        </div>
+                        <div>
+                            <span>Crying emoji sharpened</span>
+                            <img src="../images/proj2/crying_emoji_sharpened.png" alt="Sharpened emoji">
+                        </div>
+                    </div>
+                </section>
+
+                <section id="part-2-2">
+                    <h2>Part 2.2: Hybrid images</h2>
+                    <p>Hybrid images were created by combining a low-frequency image with a high-frequency image. The notebook defines this as:</p>
+                    <pre><code>low_pass = convolve2d(low_image, G, mode='same', boundary='fill')
+blurred_high = convolve2d(high_image, G, mode='same', boundary='fill')
+high_pass = high_image - blurred_high
+hybrid = low_pass + high_weight * high_pass</code></pre>
+                    <p>Three hybrid examples were assembled using aligned image pairs.</p>
+                    <div class="comparison">
+                        <div>
+                            <span>Amy + Sarveshan</span>
+                            <img src="../images/proj2/amy_sarveshan_hybrid.png" alt="Hybrid Amy Sarveshan">
+                        </div>
+                        <div>
+                            <span>Simba + Jannet</span>
+                            <img src="../images/proj2/simba_jannet_hybrid.png" alt="Hybrid Simba Jannet">
+                        </div>
+                    </div>
+                    <div class="comparison" style="margin-top: 16px;">
+                        <div>
+                            <span>Soumily + Henry</span>
+                            <img src="../images/proj2/soumily_henry_hybrid.png" alt="Hybrid Soumily Henry">
+                        </div>
+                        <div>
+                            <span>Observation</span>
+                            <p>At close viewing distance, the high-frequency component dominates perception, while from farther away the low-frequency component becomes more apparent. This makes the hybrid image appear to switch interpretation as the viewing distance changes.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="part-2-3">
+                    <h2>Part 2.3: Gaussian and Laplacian stacks</h2>
+                    <p>To prepare for multi-resolution blending, the notebook implements Gaussian and Laplacian stacks without downsampling. Each level is a blurred version of the prior one, while the Laplacian stack retains the band-passed detail between consecutive Gaussian levels.</p>
+                    <div class="gallery">
+                        <figure>
+                            <img src="../images/proj2/oraple_gaussian_0.png" alt="Oraple Gaussian level 0">
+                            <figcaption>Gaussian 0</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj2/oraple_gaussian_1.png" alt="Oraple Gaussian level 1">
+                            <figcaption>Gaussian 1</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj2/oraple_gaussian_2.png" alt="Oraple Gaussian level 2">
+                            <figcaption>Gaussian 2</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj2/oraple_gaussian_3.png" alt="Oraple Gaussian level 3">
+                            <figcaption>Gaussian 3</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj2/oraple_gaussian_4.png" alt="Oraple Gaussian level 4">
+                            <figcaption>Gaussian 4</figcaption>
+                        </figure>
+                    </div>
+                    <div class="gallery">
+                        <figure>
+                            <img src="../images/proj2/oraple_laplacian_0.png" alt="Oraple Laplacian level 0">
+                            <figcaption>Laplacian 0</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj2/oraple_laplacian_1.png" alt="Oraple Laplacian level 1">
+                            <figcaption>Laplacian 1</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj2/oraple_laplacian_2.png" alt="Oraple Laplacian level 2">
+                            <figcaption>Laplacian 2</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj2/oraple_laplacian_3.png" alt="Oraple Laplacian level 3">
+                            <figcaption>Laplacian 3</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj2/oraple_laplacian_4.png" alt="Oraple Laplacian level 4">
+                            <figcaption>Laplacian 4</figcaption>
+                        </figure>
+                    </div>
+                    <p>These stacks are the core building blocks for multi-resolution blending: the low-frequency band carries smooth structure, while the higher-frequency bands preserve local detail and texture.</p>
+                </section>
+
+                <section id="takeaway">
+                    <h2>Takeaway</h2>
+                    <p>The notebook exercises reinforce a central computational photography principle: the right filter depends on the task. Finite differences highlight edges, Gaussian smoothing suppresses noise, unsharp masks reintroduce detail, and hybrid images blend frequency bands to create perceptual transitions. Most importantly, filtering is not a one-size-fits-all operation: the best result comes from choosing the correct scale and the correct representation of image content.</p>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>
