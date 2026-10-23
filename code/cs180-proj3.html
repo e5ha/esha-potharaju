@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS180 Project 3 | Flow Matching Results</title>
+    <link rel="stylesheet" href="style.css" media="screen">
+</head>
+<body class="page cs180-page">
+    <div class="paper">
+        <div class="content">
+            <nav class="nav" aria-label="Project navigation">
+                <a href="../index.html">home</a>
+                <span> / </span>
+                <a href="cs180-proj2.html">previous project</a>
+            </nav>
+
+            <main class="project-report">
+                <p class="eyebrow">CS180: Intro to Computer Vision and Computational Photography</p>
+                <h1>Project #3: Flow Matching</h1>
+                <p class="lede">Results from the pretrained image-model experiments in Part A and the from-scratch MNIST models in Part B.</p>
+
+                <section id="part-a">
+                    <h2>Part A: Visualizing Training and Sampling</h2>
+                    <p>For the image-model exercises, I used an emoji image as the input and the notebook's pretrained flow model. The figures below are saved outputs from the Part A notebook.</p>
+
+                    <h3>Constructing noisy inputs</h3>
+                    <p>The notebook interpolates between the same Gaussian noise sample and the original image at <code>t = 0.25</code>, <code>0.50</code>, and <code>0.75</code>.</p>
+                    <figure class="notebook-result">
+                        <img src="../images/proj3/parta-training-inputs.jpg" alt="Original emoji image and interpolated noisy inputs at times 0.25, 0.5, and 0.75" loading="lazy">
+                        <figcaption>Part A, Section 1.1: original input and three noisy training inputs.</figcaption>
+                    </figure>
+
+                    <h3>Denoising comparison</h3>
+                    <p>At <code>t = 0.50</code>, the notebook compares Gaussian-blur denoising, a single model prediction, and 25 Euler updates with step size <code>0.02</code>. The saved per-pixel MSE values are <code>0.009390</code> for blur, <code>0.001702</code> for one step, and <code>0.002026</code> for Euler sampling.</p>
+                    <figure class="notebook-result">
+                        <img src="../images/proj3/parta-denoising-comparison.jpg" alt="At t equals 0.5, comparison of Gaussian blur, one-step model denoising, and iterative Euler denoising" loading="lazy">
+                        <figcaption>Part A, Section 1.5: the blur baseline, one-step prediction, and iterative Euler result alongside the original. The blur baseline selects its sigma by the lowest pixel MSE among the tested values.</figcaption>
+                    </figure>
+
+                    <h3>Generation and classifier-free guidance</h3>
+                    <p>Each panel shows five samples generated from seeds <code>180–184</code> using the prompt “a high quality photo” and 50 Euler updates. The guided run uses CFG weight <code>w = 7</code> with the same initial seeds.</p>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj3/parta-generated-samples.jpg" alt="Five samples generated from Gaussian noise without classifier-free guidance" loading="lazy">
+                            <figcaption>Part A, Section 1.6: prompt-conditioned generation without classifier-free guidance.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/parta-guided-samples.jpg" alt="Five samples generated from the same seeds using classifier-free guidance weight 7" loading="lazy">
+                            <figcaption>Part A, Section 2.1: classifier-free guidance with <code>w = 7</code>, compared using the same seeds.</figcaption>
+                        </figure>
+                    </div>
+
+                    <h3>Image editing</h3>
+                    <p>The Campanile edit uses the generic photo prompt at seven starting times from <code>0.02</code> to <code>0.50</code>. Lower starting times retain more of the input; higher starting times give the model more freedom to change it.</p>
+                    <figure class="notebook-result">
+                        <img src="../images/proj3/parta-campanile-edits.jpg" alt="Campanile original and seven image-to-image edits at different starting times" loading="lazy">
+                        <figcaption>Part A, Section 3.1: Campanile image-to-image edits at <code>t = 0.02, 0.04, 0.06, 0.10, 0.14, 0.25, 0.50</code>.</figcaption>
+                    </figure>
+                    <p>For a text-guided edit of my emoji image, I used the prompt “make it into an emoji grimacing with the hand over its mouth.”</p>
+                    <figure class="notebook-result">
+                        <img src="../images/proj3/parta-text-guided-emoji.jpg" alt="Original emoji image and seven text-guided edits at different starting times" loading="lazy">
+                        <figcaption>Part A, Section 3.2: text-guided edits of the emoji input at the same seven starting times.</figcaption>
+                    </figure>
+
+                    <h3>Creative applications</h3>
+                    <p>Visual anagrams combine two prompts so a result can be interpreted differently after a 180-degree rotation. The notebook's two prompt pairs are shown here.</p>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj3/parta-visual-anagram-sports.jpg" alt="Visual anagram shown upright and rotated, using basketball-player and soccer-player painting prompts" loading="lazy">
+                            <figcaption>“An oil painting of a man playing basketball” / “an oil painting of women playing soccer.”</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/parta-visual-anagram-castle.jpg" alt="Visual anagram shown upright and rotated, using gothic castle and dog lithograph prompts" loading="lazy">
+                            <figcaption>“A lithograph of a gothic style castle” / “a lithograph of a dog.”</figcaption>
+                        </figure>
+                    </div>
+                    <p>The hybrid images combine low-frequency structure from one prompt with high-frequency detail from another.</p>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj3/parta-hybrid-wolf-rainforest.jpg" alt="Hybrid lithograph combining a distant wolf and close-up rainforest prompts" loading="lazy">
+                            <figcaption>Distant prompt: “a lithograph of a wolf.” Close-up prompt: “a lithograph of a rainforest.”</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/parta-hybrid-palm-desert.jpg" alt="Hybrid lithograph combining a distant palm tree and close-up desert prompts" loading="lazy">
+                            <figcaption>Distant prompt: “a lithograph of a palm tree.” Close-up prompt: “a lithograph of a desert.”</figcaption>
+                        </figure>
+                    </div>
+                </section>
+
+                <section id="part-b">
+                    <h2>Part B: Flow Matching from Scratch</h2>
+                    <p>Part B trains U-Nets on MNIST. These results progress from single-step denoising to time-conditioned and class-conditioned flow matching.</p>
+
+                    <h3>Single-step denoising</h3>
+                    <p>The first experiment adds Gaussian noise at four strengths. The denoising U-Net was trained for five epochs; its mean squared error fell from <code>0.0213</code> after epoch 1 to <code>0.0081</code> after epoch 5.</p>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj3/partb-noisy-mnist.jpg" alt="MNIST digit with additive Gaussian noise at sigma 0, 0.2, 0.4, and 0.6" loading="lazy">
+                            <figcaption>Part B, Section 1.2: input noise levels used to inspect denoising behavior.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/partb-denoiser-training-loss.jpg" alt="Training loss curve for the single-step MNIST denoising U-Net" loading="lazy">
+                            <figcaption>Part B, Section 1.2.1: denoiser training loss over iterations.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/partb-ood-denoising.jpg" alt="Clean, noisy, and denoised MNIST test digit at noise levels from zero to one" loading="lazy">
+                            <figcaption>Part B, Section 1.2.2: held-out digit denoising as the noise level increases from <code>0</code> to <code>1</code>.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/partb-pure-noise-denoising.jpg" alt="Training curves and generated MNIST digits from a U-Net trained to map Gaussian noise directly to clean digits" loading="lazy">
+                            <figcaption>Part B, Section 1.2.3: direct Gaussian-noise-to-digit prediction. The five-epoch MSE decreases from <code>0.072252</code> to <code>0.067379</code>; outputs illustrate the model's tendency toward averaged digits.</figcaption>
+                        </figure>
+                    </div>
+
+                    <h3>Time-conditioned flow matching</h3>
+                    <p>The time-conditioned U-Net's flow-matching loss decreased at every epoch, from <code>0.212401</code> to <code>0.111388</code> over five epochs. The second figure shows 16 samples from the trained model.</p>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj3/partb-time-flow-loss.jpg" alt="Time-conditioned U-Net flow-matching loss across five epochs" loading="lazy">
+                            <figcaption>Part B, Section 2.2: time-conditioned training loss.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/partb-time-flow-samples.jpg" alt="Sixteen generated MNIST-like samples from the time-conditioned flow model" loading="lazy">
+                            <figcaption>Part B, Section 2.3: generated samples after five training epochs.</figcaption>
+                        </figure>
+                    </div>
+
+                    <h3>Class-conditioned flow matching</h3>
+                    <p>For class-conditioned training, I compared an exponential learning-rate schedule with a constant learning rate of <code>0.01</code>. After 10 epochs, the final losses were <code>0.088005</code> with the scheduler and <code>0.089560</code> with the constant rate.</p>
+                    <figure class="notebook-result">
+                        <img src="../images/proj3/partb-class-learning-rate.jpg" alt="Class-conditioned flow-matching training loss for exponential and constant learning-rate runs" loading="lazy">
+                        <figcaption>Part B, Section 2.5: average training loss for both learning-rate experiments over 10 epochs.</figcaption>
+                    </figure>
+                    <p>The saved sample grids show the scheduled model at epochs 1, 5, and 10, followed by the constant-learning-rate model at epoch 10.</p>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj3/partb-class-samples-epoch-1.jpg" alt="Class-conditioned MNIST samples from the exponential-schedule model after epoch 1" loading="lazy">
+                            <figcaption>Exponential schedule, epoch 1.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/partb-class-samples-epoch-5.jpg" alt="Class-conditioned MNIST samples from the exponential-schedule model after epoch 5" loading="lazy">
+                            <figcaption>Exponential schedule, epoch 5.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/partb-class-samples-epoch-10.jpg" alt="Class-conditioned MNIST samples from the exponential-schedule model after epoch 10" loading="lazy">
+                            <figcaption>Exponential schedule, epoch 10.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj3/partb-class-samples-constant-lr.jpg" alt="Class-conditioned MNIST samples from the constant-learning-rate model after epoch 10" loading="lazy">
+                            <figcaption>Constant learning rate of <code>0.01</code>, epoch 10.</figcaption>
+                        </figure>
+                    </div>
+                    <p>All four grids use the notebook's 300-step sampler with classifier-free guidance <code>CFG = 5</code>.</p>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>
