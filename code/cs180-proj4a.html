@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS180 Project 4A | Image Mosaics</title>
+    <link rel="stylesheet" href="style.css" media="screen">
+</head>
+<body class="page cs180-page">
+    <div class="paper">
+        <div class="content">
+            <nav class="nav" aria-label="Project navigation">
+                <a href="../index.html">home</a>
+                <span> / </span>
+                <a href="cs180-proj3.html">previous project</a>
+            </nav>
+
+            <main class="project-report">
+                <p class="eyebrow">CS180: Intro to Computer Vision and Computational Photography</p>
+                <h1>Project 4A: Image Mosaics</h1>
+                <p class="lede">Recovering projective transformations from image correspondences, warping overlapping views, and blending them into panoramas.</p>
+
+                <section id="pictures">
+                    <h2>A.1: Shoot the Pictures</h2>
+                    <p>I captured two overlapping image sets: one inside Moffitt Library and one outdoors at CDSS. Each set contains left, center, and right views that are stitched into a wider panorama.</p>
+
+                    <h3>Moffitt Library</h3>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj4a/moffit-indoors-left.jpg" alt="Left view of the Moffitt Library study area" loading="lazy">
+                            <figcaption>Left view</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/moffit-indoors-center.jpg" alt="Center view of the Moffitt Library study area" loading="lazy">
+                            <figcaption>Center view</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/moffit-indoors-right.jpg" alt="Right view of the Moffitt Library study area" loading="lazy">
+                            <figcaption>Right view</figcaption>
+                        </figure>
+                    </div>
+
+                    <h3>CDSS Outdoors</h3>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj4a/cdss-outdoors-left.jpg" alt="Left view of the CDSS outdoor walkway" loading="lazy">
+                            <figcaption>Left view</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/cdss-outdoors-center.jpg" alt="Center view of the CDSS outdoor walkway" loading="lazy">
+                            <figcaption>Center view</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/cdss-outdoors-right.jpg" alt="Right view of the CDSS outdoor walkway" loading="lazy">
+                            <figcaption>Right view</figcaption>
+                        </figure>
+                    </div>
+                </section>
+
+                <section id="homographies">
+                    <h2>A.2: Recover Homographies</h2>
+                    <p>I marked corresponding points in overlapping Moffitt views and solved the resulting overdetermined linear systems with least squares. The recovered homographies map the first image in each pair into the second image's coordinate frame.</p>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj4a/correspondences-set1.jpg" alt="Ten corresponding points marked across the Moffitt left and center images" loading="lazy">
+                            <figcaption>Set 1: left view to center view.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/correspondences-set2.jpg" alt="Corresponding points marked across the Moffitt right and center images" loading="lazy">
+                            <figcaption>Set 2: right view to center view.</figcaption>
+                        </figure>
+                    </div>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <figcaption>Recovered homography for Set 1</figcaption>
+                            <pre class="homography-matrix">[[ 8.89919843e-01, -1.18223936e-01, -4.48520915e+01],
+ [ 3.61424724e-02,  8.64697010e-01,  7.24101538e+02],
+ [-2.11428167e-05, -2.73520836e-05,  1.00000000e+00]]</pre>
+                        </figure>
+                        <figure>
+                            <figcaption>Recovered homography for Set 2</figcaption>
+                            <pre class="homography-matrix">[[ 1.07237534e+00, -5.24692897e-02, -8.08996820e+02],
+ [ 1.01468991e-01,  1.03724256e+00,  3.43620392e+02],
+ [ 2.71253167e-05, -3.92475529e-06,  1.00000000e+00]]</pre>
+                        </figure>
+                    </div>
+                </section>
+
+                <section id="warping">
+                    <h2>A.3: Warp the Images</h2>
+                    <p>The images are inverse-warped into the reference view so output pixels sample the source image without leaving gaps. The notebook compares nearest-neighbor sampling, which is quick but can look jagged, with bilinear sampling, which interpolates four nearby pixels for smoother results.</p>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj4a/warp-comparison-set1.jpg" alt="Nearest-neighbor and bilinear warp comparison for the first Moffitt image pair" loading="lazy">
+                            <figcaption>Warp comparison for the left and center views.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/warp-comparison-set2.jpg" alt="Nearest-neighbor and bilinear warp comparison for the second Moffitt image pair" loading="lazy">
+                            <figcaption>Warp comparison for the right and center views.</figcaption>
+                        </figure>
+                    </div>
+                    <p class="result-note">The notebook's rectification section still asks for four source corners and an image path, so no rectified-image result is included here.</p>
+                </section>
+
+                <section id="mosaics">
+                    <h2>A.4: Blend the Images into a Mosaic</h2>
+                    <p>I warp adjacent views into a shared canvas and combine overlapping pixels with feathered, edge-weighted averaging. This reduces the hard seams that would result from letting one image simply overwrite another.</p>
+
+                    <h3>Moffitt Library</h3>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj4a/moffit-indoors-left-center.jpg" alt="Feather-blended mosaic made from the Moffitt left and center views" loading="lazy">
+                            <figcaption>Left and center views blended together.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/moffit-indoors-center-right.jpg" alt="Feather-blended mosaic made from the Moffitt center and right views" loading="lazy">
+                            <figcaption>Center and right views blended together.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/moffit-indoors-panorama.jpg" alt="Full three-image feather-blended Moffitt Library panorama" loading="lazy">
+                            <figcaption>Full three-image panorama.</figcaption>
+                        </figure>
+                    </div>
+
+                    <h3>CDSS Outdoors</h3>
+                    <div class="notebook-gallery">
+                        <figure>
+                            <img src="../images/proj4a/cdss-outdoors-left-center.jpg" alt="Feather-blended mosaic made from the CDSS left and center views" loading="lazy">
+                            <figcaption>Left and center views blended together.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/cdss-outdoors-center-right.jpg" alt="Feather-blended mosaic made from the CDSS center and right views" loading="lazy">
+                            <figcaption>Center and right views blended together.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="../images/proj4a/cdss-outdoors-panorama.jpg" alt="Full three-image feather-blended CDSS outdoor panorama" loading="lazy">
+                            <figcaption>Full three-image panorama.</figcaption>
+                        </figure>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

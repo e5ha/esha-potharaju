@@ -310,6 +310,15 @@ code {
     font-size: 0.95rem;
 }
 
+.homography-matrix {
+    margin: 10px 0 0;
+    padding: 12px;
+    overflow-x: auto;
+    background: #f2e8d2;
+    color: #425d1e;
+    font-size: 0.82rem;
+}
+
 @media (max-width: 600px) {
     div.paper {
         max-width: 94%;
