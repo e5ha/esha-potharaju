@@ -22,7 +22,18 @@
 
                 <section id="pictures">
                     <h2>A.1: Shoot the Pictures</h2>
-                    <p>I captured two overlapping image sets: one inside Moffitt Library and one outdoors at CDSS. Each set contains left, center, and right views that are stitched into a wider panorama.</p>
+                    <p>I captured two overlapping image sets: one inside Moffitt Library and one outdoors at CDSS. Each set contains left, center, and right views that are stitched into a wider panorama. For projective panoramas, the notebook recommends keeping the camera's center of projection in place and rotating between shots. It also recommends substantial overlap (about 40–70%) so adjacent images share enough features to align.</p>
+                    <p>The notebook records the image paths for each pair explicitly, which makes the reference image and the source view used in each alignment clear:</p>
+                    <pre class="notebook-code"><code>image_paths = {
+    "Set 1": [
+        Path("images/moffit-indoors/left.jpg"),
+        Path("images/moffit-indoors/center.jpg"),
+    ],
+    "Set 2": [
+        Path("images/moffit-indoors/right.jpg"),
+        Path("images/moffit-indoors/center.jpg"),
+    ],
+}</code></pre>
 
                     <h3>Moffitt Library</h3>
                     <div class="notebook-gallery">
@@ -59,7 +70,17 @@
 
                 <section id="homographies">
                     <h2>A.2: Recover Homographies</h2>
-                    <p>I marked corresponding points in overlapping Moffitt views and solved the resulting overdetermined linear systems with least squares. The recovered homographies map the first image in each pair into the second image's coordinate frame.</p>
+                    <p>A homography is a 3 × 3 projective transform with eight independent parameters (the last entry is fixed to 1). For each matched point pair <code>(x, y) → (x′, y′)</code>, I add two rows to <code>A</code> and the corresponding coordinates to <code>b</code>. Ten matches in Set 1 and seven in Set 2 give more equations than unknowns, so least squares finds the best-fitting transform rather than relying on only four points.</p>
+                    <pre class="notebook-code"><code>rows.append([x, y, 1, 0, 0, 0, -xp * x, -xp * y])
+values.append(xp)
+rows.append([0, 0, 0, x, y, 1, -yp * x, -yp * y])
+values.append(yp)
+
+A = np.asarray(rows, dtype=float)
+b = np.asarray(values, dtype=float)
+h, _, rank, _ = np.linalg.lstsq(A, b, rcond=None)
+H = np.append(h, 1.0).reshape(3, 3)</code></pre>
+                    <p>The notebook also checks that the correspondences constrain all eight parameters; a rank-deficient system indicates degenerate matches, such as points that do not provide enough geometric spread.</p>
                     <div class="notebook-gallery">
                         <figure>
                             <img src="../images/proj4a/correspondences-set1.jpg" alt="Ten corresponding points marked across the Moffitt left and center images" loading="lazy">
@@ -88,7 +109,25 @@
 
                 <section id="warping">
                     <h2>A.3: Warp the Images</h2>
-                    <p>The images are inverse-warped into the reference view so output pixels sample the source image without leaving gaps. The notebook compares nearest-neighbor sampling, which is quick but can look jagged, with bilinear sampling, which interpolates four nearby pixels for smoother results.</p>
+                    <p>The output canvas is bounded by transforming the four source-image corners. I use inverse warping: for each output pixel, apply the inverse homography to find where to sample in the source image. This avoids holes that can happen when scattering source pixels into the output. A validity mask marks coordinates that land inside the source bounds.</p>
+                    <pre class="notebook-code"><code>inverse = np.linalg.inv(homography)
+source = inverse @ destination
+denominator = source[2]
+finite = np.isfinite(source).all(axis=0) &amp; (np.abs(denominator) &gt; 1e-12)
+source_x = np.zeros_like(denominator)
+source_y = np.zeros_like(denominator)
+source_x[finite] = source[0, finite] / denominator[finite]
+source_y[finite] = source[1, finite] / denominator[finite]
+inside = (
+    finite
+    &amp; (source_x &gt;= 0) &amp; (source_x &lt;= width - 1)
+    &amp; (source_y &gt;= 0) &amp; (source_y &lt;= height - 1)
+)</code></pre>
+                    <p>Nearest-neighbor interpolation rounds to the closest source pixel. Bilinear interpolation takes a weighted average of the four surrounding pixels; the fractional coordinate within that pixel neighborhood determines the weights:</p>
+                    <pre class="notebook-code"><code>top = (1 - dx) * flat_image[y0, x0] + dx * flat_image[y0, x1]
+bottom = (1 - dx) * flat_image[y1, x0] + dx * flat_image[y1, x1]
+sample = (1 - dy) * top + dy * bottom</code></pre>
+                    <p>Nearest-neighbor sampling is faster, while bilinear sampling produces smoother results under perspective transforms.</p>
                     <div class="notebook-gallery">
                         <figure>
                             <img src="../images/proj4a/warp-comparison-set1.jpg" alt="Nearest-neighbor and bilinear warp comparison for the first Moffitt image pair" loading="lazy">
@@ -104,7 +143,21 @@
 
                 <section id="mosaics">
                     <h2>A.4: Blend the Images into a Mosaic</h2>
-                    <p>I warp adjacent views into a shared canvas and combine overlapping pixels with feathered, edge-weighted averaging. This reduces the hard seams that would result from letting one image simply overwrite another.</p>
+                    <p>I use the center view as the common reference, transform each side view into that coordinate system, and compute a canvas large enough to contain all transformed image corners. For each valid warped pixel, its feather weight is the distance to the nearest source-image edge. Pixels near an edge contribute less; pixels nearer the center contribute more.</p>
+                    <pre class="notebook-code"><code>edge_distance = np.minimum.reduce(
+    [source_x + 1, source_y + 1, width - source_x, height - source_y]
+)
+weights = np.maximum(edge_distance, 0).reshape(valid.shape)
+weights *= valid
+accum[y_start:y_end, x_start:x_end] += warped.astype(float) * weights[..., None]
+total_weight[y_start:y_end, x_start:x_end] += weights
+
+valid_mosaic = total_weight &gt; 0
+mosaic = np.zeros_like(accum, dtype=np.uint8)
+mosaic[valid_mosaic] = np.clip(
+    np.rint(accum[valid_mosaic] / total_weight[valid_mosaic, None]), 0, 255
+).astype(np.uint8)</code></pre>
+                    <p>After accumulating the weighted colors, I divide by the total weight at each covered pixel. This feathered weighted average softens transitions between overlapping views instead of allowing one image to overwrite another. The notebook creates two-image mosaics first, then combines the center with both side images for each full panorama.</p>
 
                     <h3>Moffitt Library</h3>
                     <div class="notebook-gallery">
